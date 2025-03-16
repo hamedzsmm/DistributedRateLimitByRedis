@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35521.163 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Distributed.RateLimit.Redis", "Distributed.RateLimit.Redis\Distributed.RateLimit.Redis.csproj", "{B05B33CE-43A2-406D-9B7C-8E3A96029C29}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Distributed.RateLimit.Redis.AspNetCore", "Distributed.RateLimit.Redis.AspNetCore\Distributed.RateLimit.Redis.AspNetCore.csproj", "{C43E0A8F-D6D3-4D39-9108-FD8C737C6B22}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B05B33CE-43A2-406D-9B7C-8E3A96029C29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B05B33CE-43A2-406D-9B7C-8E3A96029C29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B05B33CE-43A2-406D-9B7C-8E3A96029C29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B05B33CE-43A2-406D-9B7C-8E3A96029C29}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C43E0A8F-D6D3-4D39-9108-FD8C737C6B22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C43E0A8F-D6D3-4D39-9108-FD8C737C6B22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C43E0A8F-D6D3-4D39-9108-FD8C737C6B22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C43E0A8F-D6D3-4D39-9108-FD8C737C6B22}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
