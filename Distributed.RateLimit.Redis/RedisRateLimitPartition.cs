@@ -29,6 +29,7 @@ namespace Distributed.RateLimit.Redis
         /// <typeparam name="TKey">The type to distinguish partitions with.</typeparam>
         /// <param name="partitionKey">The specific key for this partition. This will be used to check for an existing cached limiter before calling the <paramref name="factory"/>.</param>
         /// <param name="factory">The function called when a rate limiter for the given <paramref name="partitionKey"/> is needed. This can return the same instance of <see cref="RedisFixedWindowRateLimiterOptions"/> across different calls.</param>
+        /// <param name="httpContextAccessor">Use HttpContextAccessor to check token if CheckWithToken option is enabled</param>
         /// <returns></returns>
         public static RateLimitPartition<TKey> GetFixedWindowRateLimiter<TKey>(
             TKey partitionKey,
