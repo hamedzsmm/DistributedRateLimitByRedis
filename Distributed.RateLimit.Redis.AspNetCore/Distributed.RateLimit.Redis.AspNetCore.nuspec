@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+	<metadata>
+		<id>Distributed.RateLimit.Redis.AspNetCore</id>
+		<version>1.0.0</version>
+		<title>Distributed Redis Rate Limiting (ASP.NET Core)</title>
+		<authors>Hamed Seifi</authors>
+		<owners>Hamed Seifi</owners>
+		<license type="expression">MIT</license>
+		<projectUrl>https://github.com/hamedzsmm/DistributedRateLimitByRedis</projectUrl>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>A scalable and efficient rate-limiting solution for ASP.NET Core applications, leveraging Redis as a distributed cache to enforce request limits across multiple instances or servers</description>
+		<dependencies>
+			<group targetFramework="net8.0">
+				<dependency id="Distributed.RateLimit.Redis" version="1.0.0" />
+			</group>
+		</dependencies>
+		<releaseNotes>Initial release.</releaseNotes>
+		<copyright>Copyright © 2025</copyright>
+		<tags>Rate Limit Redis Distributed (ASP.NET Core)</tags>
+	</metadata>
+	<files>
+		<file src="bin\Release\net8.0\Distributed.RateLimit.Redis.AspNetCore.dll" target="lib\net8.0"/>
+	</files>
+</package>

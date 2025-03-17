@@ -9,13 +9,14 @@ namespace Distributed.RateLimit.Redis.AspNetCore
         /// </summary>
         /// <param name="options">The <see cref="RateLimiterOptions"/> to add a limiter to.</param>
         /// <param name="policyName">The name that will be associated with the limiter.</param>
+        /// <param name="uniqueName">Unique key for checking rate limit</param>
         /// <param name="configureOptions">A callback to configure the <see cref="RedisConcurrencyRateLimiterOptions"/> to be used for the limiter.</param>
         /// <returns>This <see cref="RateLimiterOptions"/>.</returns>
-        public static RateLimiterOptions AddRedisConcurrencyLimiter(this RateLimiterOptions options, string policyName, Action<RedisConcurrencyRateLimiterOptions> configureOptions)
+        public static RateLimiterOptions AddRedisConcurrencyLimiter(this RateLimiterOptions options, string policyName, string? uniqueName, Action<RedisConcurrencyRateLimiterOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions);
 
-            var key = new PolicyNameKey() { PolicyName = policyName };
+            var key = new PolicyNameKey { PolicyName = policyName, UniqueKey = uniqueName ?? "" };
             var concurrencyRateLimiterOptions = new RedisConcurrencyRateLimiterOptions();
             configureOptions.Invoke(concurrencyRateLimiterOptions);
 
@@ -30,13 +31,14 @@ namespace Distributed.RateLimit.Redis.AspNetCore
         /// </summary>
         /// <param name="options">The <see cref="RateLimiterOptions"/> to add a limiter to.</param>
         /// <param name="policyName">The name that will be associated with the limiter.</param>
+        /// <param name="uniqueName">Unique key for checking rate limit</param>
         /// <param name="configureOptions">A callback to configure the <see cref="RedisFixedWindowRateLimiterOptions"/> to be used for the limiter.</param>
         /// <returns>This <see cref="RateLimiterOptions"/>.</returns>
-        public static RateLimiterOptions AddRedisFixedWindowLimiter(this RateLimiterOptions options, string policyName, Action<RedisFixedWindowRateLimiterOptions> configureOptions)
+        public static RateLimiterOptions AddRedisFixedWindowLimiter(this RateLimiterOptions options, string policyName, string? uniqueName, Action<RedisFixedWindowRateLimiterOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions);
 
-            var key = new PolicyNameKey() { PolicyName = policyName };
+            var key = new PolicyNameKey() { PolicyName = policyName, UniqueKey = uniqueName ?? "" };
             var fixedWindowRateLimiterOptions = new RedisFixedWindowRateLimiterOptions();
             configureOptions.Invoke(fixedWindowRateLimiterOptions);
 
@@ -51,13 +53,14 @@ namespace Distributed.RateLimit.Redis.AspNetCore
         /// </summary>
         /// <param name="options">The <see cref="RateLimiterOptions"/> to add a limiter to.</param>
         /// <param name="policyName">The name that will be associated with the limiter.</param>
+        /// <param name="uniqueName">Unique key for checking rate limit</param>
         /// <param name="configureOptions">A callback to configure the <see cref="RedisSlidingWindowRateLimiterOptions"/> to be used for the limiter.</param>
         /// <returns>This <see cref="RateLimiterOptions"/>.</returns>
-        public static RateLimiterOptions AddRedisSlidingWindowLimiter(this RateLimiterOptions options, string policyName, Action<RedisSlidingWindowRateLimiterOptions> configureOptions)
+        public static RateLimiterOptions AddRedisSlidingWindowLimiter(this RateLimiterOptions options, string policyName, string? uniqueName, Action<RedisSlidingWindowRateLimiterOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions);
 
-            var key = new PolicyNameKey() { PolicyName = policyName };
+            var key = new PolicyNameKey() { PolicyName = policyName, UniqueKey = uniqueName ?? "" };
             var slidingWindowRateLimiterOptions = new RedisSlidingWindowRateLimiterOptions();
             configureOptions.Invoke(slidingWindowRateLimiterOptions);
 
@@ -72,13 +75,14 @@ namespace Distributed.RateLimit.Redis.AspNetCore
         /// </summary>
         /// <param name="options">The <see cref="RateLimiterOptions"/> to add a limiter to.</param>
         /// <param name="policyName">The name that will be associated with the limiter.</param>
+        /// <param name="uniqueName">Unique key for checking rate limit</param>
         /// <param name="configureOptions">A callback to configure the <see cref="RedisTokenBucketRateLimiterOptions"/> to be used for the limiter.</param>
         /// <returns>This <see cref="RateLimiterOptions"/>.</returns>
-        public static RateLimiterOptions AddRedisTokenBucketLimiter(this RateLimiterOptions options, string policyName, Action<RedisTokenBucketRateLimiterOptions> configureOptions)
+        public static RateLimiterOptions AddRedisTokenBucketLimiter(this RateLimiterOptions options, string policyName, string? uniqueName, Action<RedisTokenBucketRateLimiterOptions> configureOptions)
         {
             ArgumentNullException.ThrowIfNull(configureOptions);
 
-            var key = new PolicyNameKey() { PolicyName = policyName };
+            var key = new PolicyNameKey() { PolicyName = policyName, UniqueKey = uniqueName ?? "" };
             var tokenBucketRateLimiterOptions = new RedisTokenBucketRateLimiterOptions();
             configureOptions.Invoke(tokenBucketRateLimiterOptions);
 
