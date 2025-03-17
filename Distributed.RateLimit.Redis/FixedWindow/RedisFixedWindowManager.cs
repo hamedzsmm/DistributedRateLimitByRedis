@@ -1,6 +1,6 @@
-﻿using StackExchange.Redis;
-using System;
-using System.Threading.Tasks;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Http;
+using StackExchange.Redis;
 
 namespace Distributed.RateLimit.Redis.Concurrency
 {
@@ -10,6 +10,7 @@ namespace Distributed.RateLimit.Redis.Concurrency
         private readonly RedisFixedWindowRateLimiterOptions _options;
         private readonly RedisKey RateLimitKey;
         private readonly RedisKey RateLimitExpireKey;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
         private static readonly LuaScript Script = LuaScript.Prepare(
           @"local expires_at = tonumber(redis.call(""get"", @expires_at_key))
@@ -53,12 +54,38 @@ namespace Distributed.RateLimit.Redis.Concurrency
 
         public RedisFixedWindowManager(
             string partitionKey,
-            RedisFixedWindowRateLimiterOptions options)
+            RedisFixedWindowRateLimiterOptions options,
+            IHttpContextAccessor httpContextAccessor)
         {
+            _httpContextAccessor = httpContextAccessor;
             _options = options;
             _connectionMultiplexer = options.ConnectionMultiplexerFactory!.Invoke();
 
-            RateLimitKey = new RedisKey($"rl:fw:{{{partitionKey}}}");
+            if (options.CheckWithToken == false)
+                RateLimitKey = new RedisKey($"rl:fw:{{{partitionKey}}}");
+            else
+            {
+                string? tokenHash = null;
+                if (httpContextAccessor.HttpContext != null)
+                {
+                    tokenHash = httpContextAccessor.HttpContext.GetTokenAsync("access_token").GetAwaiter().GetResult();
+                    if (!string.IsNullOrEmpty(tokenHash))
+                    {
+                        tokenHash = tokenHash.GetSha256Hash();
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(tokenHash))
+                {
+                    var key = $"{partitionKey}-{tokenHash}".GetSha256Hash();
+                    RateLimitKey = new RedisKey($"rl:fw:{{{key}}}");
+                }
+                else
+                {
+                    RateLimitKey = new RedisKey($"rl:fw:{{{partitionKey}}}");
+                }
+            }
+
             RateLimitExpireKey = new RedisKey($"rl:fw:{{{partitionKey}}}:exp");
         }
 

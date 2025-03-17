@@ -2,7 +2,7 @@
 <package>
 	<metadata>
 		<id>Distributed.RateLimit.Redis</id>
-		<version>1.0.0</version>
+		<version>1.0.1</version>
 		<title>Distributed Redis Rate Limiting</title>
 		<authors>Hamed Seifi</authors>
 		<owners>Hamed Seifi</owners>

@@ -2,7 +2,7 @@
 <package>
 	<metadata>
 		<id>Distributed.RateLimit.Redis.AspNetCore</id>
-		<version>1.0.0</version>
+		<version>1.0.1</version>
 		<title>Distributed Redis Rate Limiting (ASP.NET Core)</title>
 		<authors>Hamed Seifi</authors>
 		<owners>Hamed Seifi</owners>

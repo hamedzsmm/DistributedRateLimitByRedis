@@ -1,17 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Version>1.0.1</Version>
+	</PropertyGroup>
 
 	<ItemGroup>
 		<FrameworkReference Include="Microsoft.AspNetCore.App" />
 	</ItemGroup>
-	
+
 
 	<ItemGroup>
-	  <ProjectReference Include="..\Distributed.RateLimit.Redis\Distributed.RateLimit.Redis.csproj" />
+		<ProjectReference Include="..\Distributed.RateLimit.Redis\Distributed.RateLimit.Redis.csproj" />
 	</ItemGroup>
 </Project>

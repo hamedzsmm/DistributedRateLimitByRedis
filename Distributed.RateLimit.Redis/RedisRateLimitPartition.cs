@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.Http;
 
 namespace Distributed.RateLimit.Redis
 {
@@ -31,9 +32,10 @@ namespace Distributed.RateLimit.Redis
         /// <returns></returns>
         public static RateLimitPartition<TKey> GetFixedWindowRateLimiter<TKey>(
             TKey partitionKey,
-            Func<TKey, RedisFixedWindowRateLimiterOptions> factory)
+            Func<TKey, RedisFixedWindowRateLimiterOptions> factory,
+            IHttpContextAccessor httpContextAccessor)
         {
-            return RateLimitPartition.Get(partitionKey, key => new RedisFixedWindowRateLimiter<TKey>(key, factory(key)));
+            return RateLimitPartition.Get(partitionKey, key => new RedisFixedWindowRateLimiter<TKey>(key, factory(key), httpContextAccessor));
         }
 
         /// <summary>
