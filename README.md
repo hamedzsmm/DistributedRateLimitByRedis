@@ -15,17 +15,15 @@ Install the package via NuGet:
 ```xml
 dotnet add package DistributedRateLimitByRedis
 ```
-```
+
 
 Usage
 1. Configure the Rate Limiter
 In your Program.cs or startup configuration:
 
-csharp
-Copy
-using DistributedRateLimiting.Redis;
 
 ```xml
+using DistributedRateLimiting.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,7 +67,6 @@ var app = builder.Build();
 
 app.UseRateLimiter();
 ```
-```
 
 2. Apply Rate Limiting to Endpoints
 Apply rate limiting to your controllers or actions using the [EnableRateLimiting] attribute:
@@ -87,7 +84,6 @@ public class WeatherForecastController : ControllerBase
         // Your action logic
     }
 }
-```
 ```
 
 Configuration Options
