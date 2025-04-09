@@ -12,9 +12,11 @@ This package solves this by using Redis as a centralized rate limiting store, en
 Installation
 Install the package via NuGet:
 
-bash
-Copy
+```xml
 dotnet add package DistributedRateLimitByRedis
+```
+```
+
 Usage
 1. Configure the Rate Limiter
 In your Program.cs or startup configuration:
@@ -23,7 +25,7 @@ csharp
 Copy
 using DistributedRateLimiting.Redis;
 
-// ...
+```xml
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,13 +68,14 @@ builder.Services.AddRateLimiter(options =>
 var app = builder.Build();
 
 app.UseRateLimiter();
+```
+```
 
-// ... rest of your configuration
 2. Apply Rate Limiting to Endpoints
 Apply rate limiting to your controllers or actions using the [EnableRateLimiting] attribute:
 
-csharp
-Copy
+```xml
+
 [ApiController]
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
@@ -84,6 +87,9 @@ public class WeatherForecastController : ControllerBase
         // Your action logic
     }
 }
+```
+```
+
 Configuration Options
 The AddRedisFixedWindowLimiter method accepts the following configuration:
 
