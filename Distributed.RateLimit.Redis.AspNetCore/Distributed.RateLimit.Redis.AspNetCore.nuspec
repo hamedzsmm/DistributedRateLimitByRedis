@@ -2,7 +2,7 @@
 <package>
 	<metadata>
 		<id>Distributed.RateLimit.Redis.AspNetCore</id>
-		<version>1.0.1</version>
+		<version>1.1.0</version>
 		<title>Distributed Redis Rate Limiting (ASP.NET Core)</title>
 		<authors>Hamed Seifi</authors>
 		<owners>Hamed Seifi</owners>
@@ -12,7 +12,7 @@
 		<description>A scalable and efficient rate-limiting solution for ASP.NET Core applications, leveraging Redis as a distributed cache to enforce request limits across multiple instances or servers</description>
 		<dependencies>
 			<group targetFramework="net8.0">
-				<dependency id="Distributed.RateLimit.Redis" version="1.0.0" />
+				<dependency id="Distributed.RateLimit.Redis" version="1.1.0" />
 			</group>
 		</dependencies>
 		<releaseNotes>Initial release.</releaseNotes>

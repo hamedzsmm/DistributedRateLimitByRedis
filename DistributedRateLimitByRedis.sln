@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Distributed.RateLimit.Redis
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Distributed.RateLimit.Redis.AspNetCore", "Distributed.RateLimit.Redis.AspNetCore\Distributed.RateLimit.Redis.AspNetCore.csproj", "{C43E0A8F-D6D3-4D39-9108-FD8C737C6B22}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{DC00ABC2-84DF-4D9B-B413-BE268280041D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Distributed.RateLimit.Redis.AspNetCore.Test", "Distributed.RateLimit.Redis.AspNetCore.Test\Distributed.RateLimit.Redis.AspNetCore.Test.csproj", "{BCEE48FE-A00C-4812-931F-5BEB7B87E515}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,10 @@ Global
 		{C43E0A8F-D6D3-4D39-9108-FD8C737C6B22}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C43E0A8F-D6D3-4D39-9108-FD8C737C6B22}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C43E0A8F-D6D3-4D39-9108-FD8C737C6B22}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BCEE48FE-A00C-4812-931F-5BEB7B87E515}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BCEE48FE-A00C-4812-931F-5BEB7B87E515}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BCEE48FE-A00C-4812-931F-5BEB7B87E515}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BCEE48FE-A00C-4812-931F-5BEB7B87E515}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

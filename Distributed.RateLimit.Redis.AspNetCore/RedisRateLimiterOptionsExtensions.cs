@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 namespace Distributed.RateLimit.Redis.AspNetCore
 {
@@ -32,18 +33,26 @@ namespace Distributed.RateLimit.Redis.AspNetCore
         /// <param name="options">The <see cref="RateLimiterOptions"/> to add a limiter to.</param>
         /// <param name="policyName">The name that will be associated with the limiter.</param>
         /// <param name="configureOptions">A callback to configure the <see cref="RedisFixedWindowRateLimiterOptions"/> to be used for the limiter.</param>
+        /// <param name="partitionKeySelector"></param>
         /// <returns>This <see cref="RateLimiterOptions"/>.</returns>
-        public static RateLimiterOptions AddRedisFixedWindowLimiter(this RateLimiterOptions options, string policyName, Action<RedisFixedWindowRateLimiterOptions> configureOptions, IHttpContextAccessor httpContextAccessor)
+        public static RateLimiterOptions AddRedisFixedWindowLimiter(
+            this RateLimiterOptions options,
+            string policyName,
+            Action<RedisFixedWindowRateLimiterOptions> configureOptions,
+            Func<HttpContext, string> partitionKeySelector)
         {
             ArgumentNullException.ThrowIfNull(configureOptions);
+            ArgumentNullException.ThrowIfNull(partitionKeySelector);
 
-            var key = new PolicyNameKey() { PolicyName = policyName };
             var fixedWindowRateLimiterOptions = new RedisFixedWindowRateLimiterOptions();
             configureOptions.Invoke(fixedWindowRateLimiterOptions);
 
             return options.AddPolicy(policyName, context =>
             {
-                return RedisRateLimitPartition.GetFixedWindowRateLimiter(key, _ => fixedWindowRateLimiterOptions, httpContextAccessor);
+                var partition = partitionKeySelector(context);
+                return RedisRateLimitPartition.GetFixedWindowRateLimiter(
+                    partition,
+                    _ => fixedWindowRateLimiterOptions);
             });
         }
 

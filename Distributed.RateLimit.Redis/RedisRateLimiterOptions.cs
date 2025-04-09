@@ -5,7 +5,7 @@ namespace Distributed.RateLimit.Redis
 {
     public abstract class RedisRateLimiterOptions
     {
-        // <summary>
+        /// <summary>
         /// Factory for a Redis ConnectionMultiplexer.
         /// </summary>
         public Func<IConnectionMultiplexer>? ConnectionMultiplexerFactory { get; set; }

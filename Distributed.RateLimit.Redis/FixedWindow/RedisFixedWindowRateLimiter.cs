@@ -23,7 +23,7 @@ namespace Distributed.RateLimit.Redis
             ? null
             : Stopwatch.GetElapsedTime(_idleSince);
 
-        public RedisFixedWindowRateLimiter(TKey partitionKey, RedisFixedWindowRateLimiterOptions options, IHttpContextAccessor httpContextAccessor)
+        public RedisFixedWindowRateLimiter(TKey partitionKey, RedisFixedWindowRateLimiterOptions options)
         {
             if (options is null)
             {
@@ -49,7 +49,7 @@ namespace Distributed.RateLimit.Redis
                 ConnectionMultiplexerFactory = options.ConnectionMultiplexerFactory,
             };
 
-            _redisManager = new RedisFixedWindowManager(partitionKey?.ToString() ?? string.Empty, _options, httpContextAccessor);
+            _redisManager = new RedisFixedWindowManager(partitionKey?.ToString() ?? string.Empty, _options);
         }
 
         public override RateLimiterStatistics? GetStatistics()
