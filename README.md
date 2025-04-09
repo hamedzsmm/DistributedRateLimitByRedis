@@ -1,6 +1,4 @@
 # Distributed Rate Limit By Redis
-NuGet
-License
 
 A distributed rate limiting solution for ASP.NET Core applications using Redis as a backend. This package ensures consistent rate limiting across multiple pods/instances behind a load balancer.
 
