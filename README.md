@@ -13,7 +13,8 @@ This package solves this by using Redis as a centralized rate limiting store, en
 Install the package via NuGet:
 
 ```xml
-dotnet add package DistributedRateLimitByRedis
+dotnet add package Distributed.RateLimit.Redis
+dotnet add package Distributed.RateLimit.Redis.AspNetCore
 ```
 
 
