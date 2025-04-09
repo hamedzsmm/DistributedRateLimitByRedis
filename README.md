@@ -118,4 +118,4 @@ The library minimizes Redis operations by using efficient Lua scripts
 Contributions are welcome! Please open an issue or submit a pull request.
 
 # License
-MIT License. See LICENSE for details.
+MIT License.
