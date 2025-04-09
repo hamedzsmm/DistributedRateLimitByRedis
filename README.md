@@ -1,15 +1,15 @@
-Distributed Rate Limit By Redis
+# Distributed Rate Limit By Redis
 NuGet
 License
 
 A distributed rate limiting solution for ASP.NET Core applications using Redis as a backend. This package ensures consistent rate limiting across multiple pods/instances behind a load balancer.
 
-Problem Solved
+# Problem Solved
 The standard ASP.NET Core rate limiter doesn't work effectively in distributed environments with multiple pods. When requests are distributed across pods by a load balancer, each pod maintains its own rate limit counter, allowing clients to exceed the intended limit by spreading requests across different pods.
 
 This package solves this by using Redis as a centralized rate limiting store, ensuring consistent enforcement across all instances.
 
-Installation
+# Installation
 Install the package via NuGet:
 
 ```xml
@@ -17,7 +17,7 @@ dotnet add package DistributedRateLimitByRedis
 ```
 
 
-Usage
+# Usage
 1. Configure the Rate Limiter
 In your Program.cs or startup configuration:
 
@@ -32,29 +32,33 @@ var connectionMultiplexer = ConnectionMultiplexer.Connect("your_redis_connection
 
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddRedisFixedWindowLimiter(RateLimitationConstants.WeatherForecastRateLimit,
-        (opt) =>
-        {
-            opt.ConnectionMultiplexerFactory = () => connectionMultiplexer;
-            opt.PermitLimit = 1;
-            opt.Window = TimeSpan.FromSeconds(10);
-        }, context =>
-        {
-            string partitionKey;
+                options.AddRedisFixedWindowLimiter(RateLimitationConstants.WeatherForecastRateLimit,
+                    (opt) =>
+                    {
+                        opt.ConnectionMultiplexerFactory = () => connectionMultiplexer;
+                        opt.PermitLimit = 1;
+                        opt.Window = TimeSpan.FromSeconds(10);
+                    }, context =>
+                    {
+                        var hashKey = "";
 
-            if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor) &&
-                !StringValues.IsNullOrEmpty(forwardedFor))
-            {
-                partitionKey = forwardedFor.ToString();
-            }
-            else
-            {
-                // Fall back to remote IP if header not present
-                partitionKey = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-            }
+                        if (context.Request.Headers.TryGetValue("Authorization", out var authHeader) &&
+                            !StringValues.IsNullOrEmpty(authHeader))
+                        {
+                            var authHeaderValue = authHeader.ToString();
+                            if (authHeaderValue.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                            {
+                                hashKey = authHeaderValue.GetSha256Hash();
+                            }
+                        }
+                        else
+                        {
+                            // Fall back to remote IP if header not present
+                            hashKey = (context.Connection.RemoteIpAddress?.ToString() ?? "unknown").GetSha256Hash();
+                        }
 
-            return partitionKey;
-        });
+                        return hashKey;
+                    });
 
     options.OnRejected = (context, cancellationToken) =>
     {
@@ -86,7 +90,7 @@ public class WeatherForecastController : ControllerBase
 }
 ```
 
-Configuration Options
+# Configuration Options
 The AddRedisFixedWindowLimiter method accepts the following configuration:
 
 ConnectionMultiplexerFactory: Factory function to get Redis connection
@@ -101,20 +105,16 @@ AutoReplenishment (optional): Whether to auto-replenish permits
 
 The partition key function determines how to identify clients. The example uses the X-Forwarded-For header (common in load-balanced environments) with a fallback to the remote IP address.
 
-Rate Limiting Algorithms
-Currently supports:
 
-Fixed Window: Limits the number of requests per fixed time window (e.g., 10 requests per minute)
-
-Performance Considerations
+# Performance Considerations
 Redis operations are fast, but network latency should be considered
 
 For high-traffic applications, ensure your Redis instance is properly scaled
 
 The library minimizes Redis operations by using efficient Lua scripts
 
-Contributing
+# Contributing
 Contributions are welcome! Please open an issue or submit a pull request.
 
-License
+# License
 MIT License. See LICENSE for details.

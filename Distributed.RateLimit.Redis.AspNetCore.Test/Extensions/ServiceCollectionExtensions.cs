@@ -1,4 +1,5 @@
 ﻿using Distributed.RateLimit.Redis.AspNetCore.Test.Constants;
+using Distributed.RateLimit.Redis.AspNetCore.Test.Helpers;
 using Microsoft.Extensions.Primitives;
 using StackExchange.Redis;
 
@@ -11,7 +12,7 @@ namespace Distributed.RateLimit.Redis.AspNetCore.Test.Extensions
         {
             serviceCollection.AddControllers();
             serviceCollection.AddEndpointsApiExplorer();
-            serviceCollection.AddSwaggerGen();
+            serviceCollection.ConfigureSwaggers();
 
             var redisConnectionString = configuration.GetConnectionString("RedisConnectionString");
             var connectionMultiplexer = ConnectionMultiplexer.Connect(redisConnectionString!);
@@ -27,20 +28,24 @@ namespace Distributed.RateLimit.Redis.AspNetCore.Test.Extensions
                         opt.Window = TimeSpan.FromSeconds(10);
                     }, context =>
                     {
-                        string partitionKey;
+                        var hashKey = "";
 
-                        if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor) &&
-                            !StringValues.IsNullOrEmpty(forwardedFor))
+                        if (context.Request.Headers.TryGetValue("Authorization", out var authHeader) &&
+                            !StringValues.IsNullOrEmpty(authHeader))
                         {
-                            partitionKey = forwardedFor.ToString();
+                            var authHeaderValue = authHeader.ToString();
+                            if (authHeaderValue.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                            {
+                                hashKey = authHeaderValue.GetSha256Hash();
+                            }
                         }
                         else
                         {
                             // Fall back to remote IP if header not present
-                            partitionKey = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                            hashKey = (context.Connection.RemoteIpAddress?.ToString() ?? "unknown").GetSha256Hash();
                         }
 
-                        return partitionKey;
+                        return hashKey;
                     });
 
                 options.OnRejected = (context, cancellationToken) =>
