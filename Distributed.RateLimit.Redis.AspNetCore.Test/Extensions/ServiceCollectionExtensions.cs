@@ -30,6 +30,7 @@ namespace Distributed.RateLimit.Redis.AspNetCore.Test.Extensions
                     {
                         var hashKey = "";
 
+                        //Create hash from Bearer token
                         if (context.Request.Headers.TryGetValue("Authorization", out var authHeader) &&
                             !StringValues.IsNullOrEmpty(authHeader))
                         {

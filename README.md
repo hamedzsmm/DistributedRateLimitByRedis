@@ -31,33 +31,34 @@ var connectionMultiplexer = ConnectionMultiplexer.Connect("your_redis_connection
 
 builder.Services.AddRateLimiter(options =>
 {
-                options.AddRedisFixedWindowLimiter(RateLimitationConstants.WeatherForecastRateLimit,
-                    (opt) =>
-                    {
-                        opt.ConnectionMultiplexerFactory = () => connectionMultiplexer;
-                        opt.PermitLimit = 1;
-                        opt.Window = TimeSpan.FromSeconds(10);
-                    }, context =>
-                    {
-                        var hashKey = "";
+	options.AddRedisFixedWindowLimiter(RateLimitationConstants.WeatherForecastRateLimit,
+		(opt) =>
+		{
+			opt.ConnectionMultiplexerFactory = () => connectionMultiplexer;
+			opt.PermitLimit = 1;
+			opt.Window = TimeSpan.FromSeconds(10);
+		}, context =>
+		{
+			var hashKey = "";
 
-                        if (context.Request.Headers.TryGetValue("Authorization", out var authHeader) &&
-                            !StringValues.IsNullOrEmpty(authHeader))
-                        {
-                            var authHeaderValue = authHeader.ToString();
-                            if (authHeaderValue.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                            {
-                                hashKey = authHeaderValue.GetSha256Hash();
-                            }
-                        }
-                        else
-                        {
-                            // Fall back to remote IP if header not present
-                            hashKey = (context.Connection.RemoteIpAddress?.ToString() ?? "unknown").GetSha256Hash();
-                        }
+			//Create hash from Bearer token
+			if (context.Request.Headers.TryGetValue("Authorization", out var authHeader) &&
+				!StringValues.IsNullOrEmpty(authHeader))
+			{
+				var authHeaderValue = authHeader.ToString();
+				if (authHeaderValue.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+				{
+					hashKey = authHeaderValue.GetSha256Hash();
+				}
+			}
+			else
+			{
+				// Fall back to remote IP if header not present
+				hashKey = (context.Connection.RemoteIpAddress?.ToString() ?? "unknown").GetSha256Hash();
+			}
 
-                        return hashKey;
-                    });
+			return hashKey;
+		});
 
     options.OnRejected = (context, cancellationToken) =>
     {
