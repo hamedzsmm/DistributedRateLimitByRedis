@@ -21,7 +21,7 @@ dotnet add package Distributed.RateLimit.Redis.AspNetCore
 In your Program.cs or startup configuration:
 
 
-```xml
+```csharp
 using DistributedRateLimiting.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -75,8 +75,7 @@ app.UseRateLimiter();
 2. Apply Rate Limiting to Endpoints
 Apply rate limiting to your controllers or actions using the [EnableRateLimiting] attribute:
 
-```xml
-
+```csharp
 [ApiController]
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
