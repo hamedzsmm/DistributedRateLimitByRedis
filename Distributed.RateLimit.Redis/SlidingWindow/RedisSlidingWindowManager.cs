@@ -3,12 +3,13 @@ using StackExchange.Redis;
 
 namespace Distributed.RateLimit.Redis.SlidingWindow
 {
-    internal class RedisSlidingWindowManager
+    internal class RedisSlidingWindowManager(
+        string partitionKey,
+        RedisSlidingWindowRateLimiterOptions options)
     {
-        private readonly IConnectionMultiplexer _connectionMultiplexer;
-        private readonly RedisSlidingWindowRateLimiterOptions _options;
-        private readonly RedisKey RateLimitKey;
-        private readonly RedisKey StatsRateLimitKey;
+        private readonly IConnectionMultiplexer _connectionMultiplexer = options.ConnectionMultiplexerFactory!.Invoke();
+        private readonly RedisKey _rateLimitKey = new($"rl:sw:{{{partitionKey}}}");
+        private readonly RedisKey _statsRateLimitKey = new($"rl:sw:{{{partitionKey}}}:stats");
 
         private static readonly LuaScript Script = LuaScript.Prepare(
           @"local limit = tonumber(@permit_limit)
@@ -47,17 +48,6 @@ namespace Distributed.RateLimit.Redis.SlidingWindow
 
             return { count, total_successful_count, total_failed_count }");
 
-        public RedisSlidingWindowManager(
-            string partitionKey,
-            RedisSlidingWindowRateLimiterOptions options)
-        {
-            _options = options;
-            _connectionMultiplexer = options.ConnectionMultiplexerFactory!.Invoke();
-
-            RateLimitKey = new RedisKey($"rl:sw:{{{partitionKey}}}");
-            StatsRateLimitKey = new RedisKey($"rl:sw:{{{partitionKey}}}:stats");
-        }
-
         internal async Task<RedisSlidingWindowResponse> TryAcquireLeaseAsync(string requestId)
         {
             var now = DateTimeOffset.UtcNow;
@@ -69,10 +59,10 @@ namespace Distributed.RateLimit.Redis.SlidingWindow
                 Script,
                 new
                 {
-                    rate_limit_key = RateLimitKey,
-                    stats_key = StatsRateLimitKey,
-                    permit_limit = (RedisValue)_options.PermitLimit,
-                    window = (RedisValue)_options.Window.TotalSeconds,
+                    rate_limit_key = _rateLimitKey,
+                    stats_key = _statsRateLimitKey,
+                    permit_limit = (RedisValue)options.PermitLimit,
+                    window = (RedisValue)options.Window.TotalSeconds,
                     current_time = (RedisValue)nowUnixTimeSeconds,
                     unique_id = (RedisValue)requestId,
                 });
@@ -99,10 +89,10 @@ namespace Distributed.RateLimit.Redis.SlidingWindow
                Script,
                new
                {
-                   rate_limit_key = RateLimitKey,
-                   stats_key = StatsRateLimitKey,
-                   permit_limit = (RedisValue)_options.PermitLimit,
-                   window = (RedisValue)_options.Window.TotalSeconds,
+                   rate_limit_key = _rateLimitKey,
+                   stats_key = _statsRateLimitKey,
+                   permit_limit = (RedisValue)options.PermitLimit,
+                   window = (RedisValue)options.Window.TotalSeconds,
                    current_time = (RedisValue)nowUnixTimeSeconds,
                    unique_id = (RedisValue)requestId,
                });
@@ -126,8 +116,8 @@ namespace Distributed.RateLimit.Redis.SlidingWindow
                 StatisticsScript,
                 new
                 {
-                    rate_limit_key = RateLimitKey,
-                    stats_key = StatsRateLimitKey,
+                    rate_limit_key = _rateLimitKey,
+                    stats_key = _statsRateLimitKey,
                 });
 
             if (response == null)
@@ -137,7 +127,7 @@ namespace Distributed.RateLimit.Redis.SlidingWindow
 
             return new RateLimiterStatistics
             {
-                CurrentAvailablePermits = _options.PermitLimit - (long)response[0],
+                CurrentAvailablePermits = options.PermitLimit - (long)response[0],
                 TotalSuccessfulLeases = (long)response[1],
                 TotalFailedLeases = (long)response[2],
             };

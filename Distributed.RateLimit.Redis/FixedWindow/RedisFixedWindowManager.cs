@@ -2,12 +2,13 @@
 
 namespace Distributed.RateLimit.Redis.FixedWindow
 {
-    internal class RedisFixedWindowManager
+    internal class RedisFixedWindowManager(
+        string partitionKey,
+        RedisFixedWindowRateLimiterOptions options)
     {
-        private readonly IConnectionMultiplexer _connectionMultiplexer;
-        private readonly RedisFixedWindowRateLimiterOptions _options;
-        private readonly RedisKey RateLimitKey;
-        private readonly RedisKey RateLimitExpireKey;
+        private readonly IConnectionMultiplexer _connectionMultiplexer = options.ConnectionMultiplexerFactory!.Invoke();
+        private readonly RedisKey _rateLimitKey = new($"rl:fw:{{{partitionKey}}}");
+        private readonly RedisKey _rateLimitExpireKey = new($"rl:fw:{{{partitionKey}}}:exp");
 
         private static readonly LuaScript Script = LuaScript.Prepare(
           @"local expires_at = tonumber(redis.call(""get"", @expires_at_key))
@@ -49,18 +50,6 @@ namespace Distributed.RateLimit.Redis.FixedWindow
             return { current, expires_at, allowed } 
         ");
 
-        public RedisFixedWindowManager(
-            string partitionKey,
-            RedisFixedWindowRateLimiterOptions options)
-        {
-            _options = options;
-            _connectionMultiplexer = options.ConnectionMultiplexerFactory!.Invoke();
-
-            RateLimitKey = new RedisKey($"rl:fw:{{{partitionKey}}}");
-
-            RateLimitExpireKey = new RedisKey($"rl:fw:{{{partitionKey}}}:exp");
-        }
-
         internal async Task<RedisFixedWindowResponse> TryAcquireLeaseAsync(int permitCount)
         {
             var now = DateTimeOffset.UtcNow;
@@ -72,11 +61,11 @@ namespace Distributed.RateLimit.Redis.FixedWindow
                 Script,
                 new
                 {
-                    rate_limit_key = RateLimitKey,
-                    expires_at_key = RateLimitExpireKey,
-                    next_expires_at = (RedisValue)now.Add(_options.Window).ToUnixTimeSeconds(),
+                    rate_limit_key = _rateLimitKey,
+                    expires_at_key = _rateLimitExpireKey,
+                    next_expires_at = (RedisValue)now.Add(options.Window).ToUnixTimeSeconds(),
                     current_time = (RedisValue)nowUnixTimeSeconds,
-                    permit_limit = (RedisValue)_options.PermitLimit,
+                    permit_limit = (RedisValue)options.PermitLimit,
                     increment_amount = (RedisValue)permitCount,
                 });
 
@@ -104,9 +93,9 @@ namespace Distributed.RateLimit.Redis.FixedWindow
                 Script,
                 new
                 {
-                    rate_limit_key = RateLimitKey,
-                    expires_at_key = RateLimitExpireKey,
-                    next_expires_at = (RedisValue)now.Add(_options.Window).ToUnixTimeSeconds(),
+                    rate_limit_key = _rateLimitKey,
+                    expires_at_key = _rateLimitExpireKey,
+                    next_expires_at = (RedisValue)now.Add(options.Window).ToUnixTimeSeconds(),
                     current_time = (RedisValue)nowUnixTimeSeconds,
                     increment_amount = (RedisValue)1D,
                 });

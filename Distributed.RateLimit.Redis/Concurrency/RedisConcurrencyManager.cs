@@ -7,9 +7,9 @@ namespace Distributed.RateLimit.Redis.Concurrency
     {
         private readonly IConnectionMultiplexer _connectionMultiplexer;
         private readonly RedisConcurrencyRateLimiterOptions _options;
-        private readonly RedisKey RateLimitKey;
-        private readonly RedisKey QueueRateLimitKey;
-        private readonly RedisKey StatsRateLimitKey;
+        private readonly RedisKey _rateLimitKey;
+        private readonly RedisKey _queueRateLimitKey;
+        private readonly RedisKey _statsRateLimitKey;
 
         private static readonly LuaScript Script = LuaScript.Prepare(
           @"local limit = tonumber(@permit_limit)
@@ -107,9 +107,9 @@ namespace Distributed.RateLimit.Redis.Concurrency
             _options = options;
             _connectionMultiplexer = options.ConnectionMultiplexerFactory!.Invoke();
 
-            RateLimitKey = new RedisKey($"rl:cc:{{{partitionKey}}}");
-            QueueRateLimitKey = new RedisKey($"rl:cc:{{{partitionKey}}}:q");
-            StatsRateLimitKey = new RedisKey($"rl:cc:{{{partitionKey}}}:stats");
+            _rateLimitKey = new RedisKey($"rl:cc:{{{partitionKey}}}");
+            _queueRateLimitKey = new RedisKey($"rl:cc:{{{partitionKey}}}:q");
+            _statsRateLimitKey = new RedisKey($"rl:cc:{{{partitionKey}}}:stats");
         }
 
         internal async Task<RedisConcurrencyResponse> TryAcquireLeaseAsync(string requestId, bool tryEnqueue = false)
@@ -122,9 +122,9 @@ namespace Distributed.RateLimit.Redis.Concurrency
                 Script,
                 new
                 {
-                    rate_limit_key = RateLimitKey,
-                    queue_key = QueueRateLimitKey,
-                    stats_key = StatsRateLimitKey,
+                    rate_limit_key = _rateLimitKey,
+                    queue_key = _queueRateLimitKey,
+                    stats_key = _statsRateLimitKey,
                     permit_limit = (RedisValue)_options.PermitLimit,
                     try_enqueue = (RedisValue)(tryEnqueue ? 1 : 0),
                     queue_limit = (RedisValue)_options.QueueLimit,
@@ -155,9 +155,9 @@ namespace Distributed.RateLimit.Redis.Concurrency
                 Script,
                 new
                 {
-                    rate_limit_key = RateLimitKey,
-                    queue_key = QueueRateLimitKey,
-                    stats_key = StatsRateLimitKey,
+                    rate_limit_key = _rateLimitKey,
+                    queue_key = _queueRateLimitKey,
+                    stats_key = _statsRateLimitKey,
                     permit_limit = (RedisValue)_options.PermitLimit,
                     try_enqueue = (RedisValue)(tryEnqueue ? 1 : 0),
                     queue_limit = (RedisValue)_options.QueueLimit,
@@ -181,19 +181,19 @@ namespace Distributed.RateLimit.Redis.Concurrency
         internal void ReleaseLease(string requestId)
         {
             var database = _connectionMultiplexer.GetDatabase();
-            database.SortedSetRemove(RateLimitKey, requestId);
+            database.SortedSetRemove(_rateLimitKey, requestId);
         }
 
         internal async Task ReleaseLeaseAsync(string requestId)
         {
             var database = _connectionMultiplexer.GetDatabase();
-            await database.SortedSetRemoveAsync(RateLimitKey, requestId);
+            await database.SortedSetRemoveAsync(_rateLimitKey, requestId);
         }
 
         internal async Task ReleaseQueueLeaseAsync(string requestId)
         {
             var database = _connectionMultiplexer.GetDatabase();
-            await database.SortedSetRemoveAsync(QueueRateLimitKey, requestId);
+            await database.SortedSetRemoveAsync(_queueRateLimitKey, requestId);
         }
 
         internal RateLimiterStatistics? GetStatistics()
@@ -204,9 +204,9 @@ namespace Distributed.RateLimit.Redis.Concurrency
                 StatisticsScript,
                 new
                 {
-                    rate_limit_key = RateLimitKey,
-                    queue_key = QueueRateLimitKey,
-                    stats_key = StatsRateLimitKey,
+                    rate_limit_key = _rateLimitKey,
+                    queue_key = _queueRateLimitKey,
+                    stats_key = _statsRateLimitKey,
                 });
 
             if (response == null)

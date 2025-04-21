@@ -1,14 +1,14 @@
 ﻿using StackExchange.Redis;
-using Distributed.RateLimit.Redis.TokenBucket;
 
-namespace Distributed.RateLimit.Redis.Concurrency
+namespace Distributed.RateLimit.Redis.TokenBucket
 {
-    internal class RedisTokenBucketManager
+    internal class RedisTokenBucketManager(
+        string partitionKey,
+        RedisTokenBucketRateLimiterOptions options)
     {
-        private readonly IConnectionMultiplexer _connectionMultiplexer;
-        private readonly RedisTokenBucketRateLimiterOptions _options;
-        private readonly RedisKey RateLimitKey;
-        private readonly RedisKey RateLimitTimestampKey;
+        private readonly IConnectionMultiplexer _connectionMultiplexer = options.ConnectionMultiplexerFactory!.Invoke();
+        private readonly RedisKey _rateLimitKey = new($"rl:tb:{{{partitionKey}}}");
+        private readonly RedisKey _rateLimitTimestampKey = new($"rl:tb:{{{partitionKey}}}:ts");
 
         private static readonly LuaScript Script = LuaScript.Prepare(@"
             -- Prepare the input and force the correct data types.
@@ -64,17 +64,6 @@ namespace Distributed.RateLimit.Redis.Concurrency
 
             return { allowed, current_tokens, retry_after }");
 
-        public RedisTokenBucketManager(
-            string partitionKey,
-            RedisTokenBucketRateLimiterOptions options)
-        {
-            _options = options;
-            _connectionMultiplexer = options.ConnectionMultiplexerFactory!.Invoke();
-
-            RateLimitKey = new RedisKey($"rl:tb:{{{partitionKey}}}");
-            RateLimitTimestampKey = new RedisKey($"rl:tb:{{{partitionKey}}}:ts");
-        }
-
         internal async Task<RedisTokenBucketResponse> TryAcquireLeaseAsync(int permitCount)
         {
             var database = _connectionMultiplexer.GetDatabase();
@@ -83,11 +72,11 @@ namespace Distributed.RateLimit.Redis.Concurrency
                 Script,
                 new
                 {
-                    rate_limit_key = RateLimitKey,
-                    timestamp_key = RateLimitTimestampKey,
-                    tokens_per_period = (RedisValue)_options.TokensPerPeriod,
-                    token_limit = (RedisValue)_options.TokenLimit,
-                    replenish_period = (RedisValue)_options.ReplenishmentPeriod.TotalMilliseconds,
+                    rate_limit_key = _rateLimitKey,
+                    timestamp_key = _rateLimitTimestampKey,
+                    tokens_per_period = (RedisValue)options.TokensPerPeriod,
+                    token_limit = (RedisValue)options.TokenLimit,
+                    replenish_period = (RedisValue)options.ReplenishmentPeriod.TotalMilliseconds,
                     permit_count = (RedisValue)permitCount,
                     current_time = (RedisValue)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 });
@@ -112,11 +101,11 @@ namespace Distributed.RateLimit.Redis.Concurrency
                 Script,
                 new
                 {
-                    rate_limit_key = RateLimitKey,
-                    timestamp_key = RateLimitTimestampKey,
-                    tokens_per_period = (RedisValue)_options.TokensPerPeriod,
-                    token_limit = (RedisValue)_options.TokenLimit,
-                    replenish_period = (RedisValue)_options.ReplenishmentPeriod.TotalMilliseconds,
+                    rate_limit_key = _rateLimitKey,
+                    timestamp_key = _rateLimitTimestampKey,
+                    tokens_per_period = (RedisValue)options.TokensPerPeriod,
+                    token_limit = (RedisValue)options.TokenLimit,
+                    replenish_period = (RedisValue)options.ReplenishmentPeriod.TotalMilliseconds,
                     permit_count = (RedisValue)1D,
                     current_time = (RedisValue)DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 });

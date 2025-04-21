@@ -14,7 +14,7 @@ namespace Distributed.RateLimit.Redis.Concurrency
 
         private bool _disposed;
 
-        private readonly ConcurrencyLease FailedLease = new(false, null, null);
+        private readonly ConcurrencyLease _failedLease = new(false, null, null);
 
         private int _activeRequestsCount;
         private long _idleSince = Stopwatch.GetTimestamp();
@@ -31,15 +31,15 @@ namespace Distributed.RateLimit.Redis.Concurrency
             }
             if (options.PermitLimit <= 0)
             {
-                throw new ArgumentException(string.Format("{0} must be set to a value greater than 0.", nameof(options.PermitLimit)), nameof(options));
+                throw new ArgumentException($"{nameof(options.PermitLimit)} must be set to a value greater than 0.", nameof(options));
             }
             if (options.QueueLimit < 0)
             {
-                throw new ArgumentException(string.Format("{0} must be set to a value greater than 0.", nameof(options.QueueLimit)), nameof(options));
+                throw new ArgumentException($"{nameof(options.QueueLimit)} must be set to a value greater than 0.", nameof(options));
             }
             if (options.ConnectionMultiplexerFactory is null)
             {
-                throw new ArgumentException(string.Format("{0} must not be null.", nameof(options.ConnectionMultiplexerFactory)), nameof(options));
+                throw new ArgumentException($"{nameof(options.ConnectionMultiplexerFactory)} must not be null.", nameof(options));
             }
 
             _options = new RedisConcurrencyRateLimiterOptions
@@ -70,7 +70,8 @@ namespace Distributed.RateLimit.Redis.Concurrency
             _idleSince = Stopwatch.GetTimestamp();
             if (permitCount > _options.PermitLimit)
             {
-                throw new ArgumentOutOfRangeException(nameof(permitCount), permitCount, string.Format("{0} permit(s) exceeds the permit limit of {1}.", permitCount, _options.PermitLimit));
+                throw new ArgumentOutOfRangeException(nameof(permitCount), permitCount,
+                    $"{permitCount} permit(s) exceeds the permit limit of {_options.PermitLimit}.");
             }
 
             Interlocked.Increment(ref _activeRequestsCount);
@@ -87,13 +88,12 @@ namespace Distributed.RateLimit.Redis.Concurrency
 
         protected override RateLimitLease AttemptAcquireCore(int permitCount)
         {
-            // https://github.com/cristipufu/aspnetcore-redis-rate-limiting/issues/66
-            return FailedLease;
+            return _failedLease;
         }
 
         private async ValueTask<RateLimitLease> AcquireAsyncCoreInternal(CancellationToken cancellationToken)
         {
-            var leaseContext = new ConcurencyLeaseContext
+            var leaseContext = new ConcurrencyLeaseContext
             {
                 Limit = _options.PermitLimit,
                 RequestId = Guid.NewGuid().ToString(),
@@ -136,7 +136,7 @@ namespace Distributed.RateLimit.Redis.Concurrency
             return new ConcurrencyLease(isAcquired: false, this, leaseContext);
         }
 
-        private void Release(ConcurencyLeaseContext leaseContext)
+        private void Release(ConcurrencyLeaseContext leaseContext)
         {
             if (leaseContext.RequestId is null) return;
 
@@ -166,7 +166,7 @@ namespace Distributed.RateLimit.Redis.Concurrency
                         }
                         finally
                         {
-                            request.CancellationTokenRegistration.Dispose();
+                            await request.CancellationTokenRegistration.DisposeAsync();
 
                             _queue.TryDequeue(out _);
                         }
@@ -192,7 +192,7 @@ namespace Distributed.RateLimit.Redis.Concurrency
                         }
                         finally
                         {
-                            request.CancellationTokenRegistration.Dispose();
+                            await request.CancellationTokenRegistration.DisposeAsync();
 
                             _queue.TryDequeue(out _);
                         }
@@ -228,8 +228,8 @@ namespace Distributed.RateLimit.Redis.Concurrency
 
             while (_queue.TryDequeue(out var request))
             {
-                request?.CancellationTokenRegistration.Dispose();
-                request?.TaskCompletionSource?.TrySetResult(FailedLease);
+                request.CancellationTokenRegistration.Dispose();
+                request.TaskCompletionSource?.TrySetResult(_failedLease);
             }
 
             base.Dispose(disposing);
@@ -242,49 +242,42 @@ namespace Distributed.RateLimit.Redis.Concurrency
             return default;
         }
 
-        private sealed class ConcurencyLeaseContext
+        private sealed class ConcurrencyLeaseContext
         {
-            public string? RequestId { get; set; }
+            public string? RequestId { get; init; }
 
             public long Count { get; set; }
 
-            public long Limit { get; set; }
+            public long Limit { get; init; }
         }
 
-        private sealed class ConcurrencyLease : RateLimitLease
+        private sealed class ConcurrencyLease(
+            bool isAcquired,
+            RedisConcurrencyRateLimiter<TKey>? limiter,
+            ConcurrencyLeaseContext? context)
+            : RateLimitLease
         {
-            private static readonly string[] s_allMetadataNames = new[] { RateLimitMetadataName.Limit.Name, RateLimitMetadataName.Remaining.Name };
-
             private bool _disposed;
-            private readonly RedisConcurrencyRateLimiter<TKey>? _limiter;
-            private readonly ConcurencyLeaseContext? _context;
 
-            public ConcurrencyLease(bool isAcquired, RedisConcurrencyRateLimiter<TKey>? limiter, ConcurencyLeaseContext? context)
-            {
-                IsAcquired = isAcquired;
-                _limiter = limiter;
-                _context = context;
-            }
+            public override bool IsAcquired { get; } = isAcquired;
 
-            public override bool IsAcquired { get; }
-
-            public override IEnumerable<string> MetadataNames => s_allMetadataNames;
+            public override IEnumerable<string> MetadataNames => [RateLimitMetadataName.Limit.Name, RateLimitMetadataName.Remaining.Name];
 
             public override bool TryGetMetadata(string metadataName, out object? metadata)
             {
-                if (metadataName == RateLimitMetadataName.Limit.Name && _context is not null)
+                if (metadataName == RateLimitMetadataName.Limit.Name && context is not null)
                 {
-                    metadata = _context.Limit.ToString();
+                    metadata = context.Limit.ToString();
                     return true;
                 }
 
-                if (metadataName == RateLimitMetadataName.Remaining.Name && _context is not null)
+                if (metadataName == RateLimitMetadataName.Remaining.Name && context is not null)
                 {
-                    metadata = _context.Limit - _context.Count;
+                    metadata = context.Limit - context.Count;
                     return true;
                 }
 
-                metadata = default;
+                metadata = null;
                 return false;
             }
 
@@ -297,20 +290,20 @@ namespace Distributed.RateLimit.Redis.Concurrency
 
                 _disposed = true;
 
-                if (_context != null)
+                if (context != null)
                 {
-                    _limiter?.Release(_context);
+                    limiter?.Release(context);
                 }
             }
         }
 
         private sealed class Request
         {
-            public CancellationToken CancellationToken { get; set; }
+            public CancellationToken CancellationToken { get; init; }
 
-            public ConcurencyLeaseContext? LeaseContext { get; set; }
+            public ConcurrencyLeaseContext? LeaseContext { get; init; }
 
-            public TaskCompletionSource<RateLimitLease>? TaskCompletionSource { get; set; }
+            public TaskCompletionSource<RateLimitLease>? TaskCompletionSource { get; init; }
 
             public CancellationTokenRegistration CancellationTokenRegistration { get; set; }
         }

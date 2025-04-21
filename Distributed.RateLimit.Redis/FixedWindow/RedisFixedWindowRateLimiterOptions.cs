@@ -1,7 +1,7 @@
 ﻿namespace Distributed.RateLimit.Redis.FixedWindow
 {
     /// <summary>
-    /// Options to specify the behavior of a <see cref="RedisFixedWindowRateLimiter"/>.
+    /// Options to specify the behavior of a <see cref="RedisFixedWindowRateLimiterOptions"/>.
     /// </summary>
     public sealed class RedisFixedWindowRateLimiterOptions : RedisRateLimiterOptions
     {

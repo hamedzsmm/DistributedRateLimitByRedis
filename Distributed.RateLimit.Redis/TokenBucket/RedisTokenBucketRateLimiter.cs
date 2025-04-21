@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics;
 using System.Threading.RateLimiting;
-using Distributed.RateLimit.Redis.Concurrency;
 
 namespace Distributed.RateLimit.Redis.TokenBucket
 {
@@ -9,7 +8,7 @@ namespace Distributed.RateLimit.Redis.TokenBucket
         private readonly RedisTokenBucketManager _redisManager;
         private readonly RedisTokenBucketRateLimiterOptions _options;
 
-        private readonly TokenBucketLease FailedLease = new(isAcquired: false, null);
+        private readonly TokenBucketLease _failedLease = new(isAcquired: false, null);
 
         private int _activeRequestsCount;
         private long _idleSince = Stopwatch.GetTimestamp();
@@ -26,20 +25,20 @@ namespace Distributed.RateLimit.Redis.TokenBucket
             }
             if (options.TokenLimit <= 0)
             {
-                throw new ArgumentException(string.Format("{0} must be set to a value greater than 0.", nameof(options.TokenLimit)), nameof(options));
+                throw new ArgumentException($"{nameof(options.TokenLimit)} must be set to a value greater than 0.", nameof(options));
             }
             if (options.TokensPerPeriod <= 0)
             {
-                throw new ArgumentException(string.Format("{0} must be set to a value greater than 0.", nameof(options.TokensPerPeriod)), nameof(options));
+                throw new ArgumentException($"{nameof(options.TokensPerPeriod)} must be set to a value greater than 0.", nameof(options));
             }
             if (options.ReplenishmentPeriod <= TimeSpan.Zero)
             {
-                throw new ArgumentException(string.Format("{0} must be set to a value greater than TimeSpan.Zero.", nameof(options.ReplenishmentPeriod)), nameof(options));
+                throw new ArgumentException($"{nameof(options.ReplenishmentPeriod)} must be set to a value greater than TimeSpan.Zero.", nameof(options));
             }
             
             if (options.ConnectionMultiplexerFactory is null)
             {
-                throw new ArgumentException(string.Format("{0} must not be null.", nameof(options.ConnectionMultiplexerFactory)), nameof(options));
+                throw new ArgumentException($"{nameof(options.ConnectionMultiplexerFactory)} must not be null.", nameof(options));
             }
             _options = new RedisTokenBucketRateLimiterOptions
             {
@@ -62,7 +61,8 @@ namespace Distributed.RateLimit.Redis.TokenBucket
             _idleSince = Stopwatch.GetTimestamp();
             if (permitCount > _options.TokenLimit)
             {
-                throw new ArgumentOutOfRangeException(nameof(permitCount), permitCount, string.Format("{0} permit(s) exceeds the permit limit of {1}.", permitCount, _options.TokenLimit));
+                throw new ArgumentOutOfRangeException(nameof(permitCount), permitCount,
+                    $"{permitCount} permit(s) exceeds the permit limit of {_options.TokenLimit}.");
             }
 
             Interlocked.Increment(ref _activeRequestsCount);
@@ -79,8 +79,7 @@ namespace Distributed.RateLimit.Redis.TokenBucket
 
         protected override RateLimitLease AttemptAcquireCore(int permitCount)
         {
-            // https://github.com/cristipufu/aspnetcore-redis-rate-limiting/issues/66
-            return FailedLease;
+            return _failedLease;
         }
 
         private async ValueTask<RateLimitLease> AcquireAsyncCoreInternal(int permitCount)
@@ -108,50 +107,40 @@ namespace Distributed.RateLimit.Redis.TokenBucket
         {
             public long Count { get; set; }
 
-            public long Limit { get; set; }
+            public long Limit { get; init; }
 
             public int RetryAfter { get; set; }
 
             public bool Allowed { get; set; }
         }
 
-        private sealed class TokenBucketLease : RateLimitLease
+        private sealed class TokenBucketLease(bool isAcquired, TokenBucketLeaseContext? context) : RateLimitLease
         {
-            private static readonly string[] s_allMetadataNames = new[] { RateLimitMetadataName.Limit.Name, RateLimitMetadataName.Remaining.Name };
+            public override bool IsAcquired { get; } = isAcquired;
 
-            private readonly TokenBucketLeaseContext? _context;
-
-            public TokenBucketLease(bool isAcquired, TokenBucketLeaseContext? context)
-            {
-                IsAcquired = isAcquired;
-                _context = context;
-            }
-
-            public override bool IsAcquired { get; }
-
-            public override IEnumerable<string> MetadataNames => s_allMetadataNames;
+            public override IEnumerable<string> MetadataNames => [RateLimitMetadataName.Limit.Name, RateLimitMetadataName.Remaining.Name];
 
             public override bool TryGetMetadata(string metadataName, out object? metadata)
             {
-                if (metadataName == RateLimitMetadataName.Limit.Name && _context is not null)
+                if (metadataName == RateLimitMetadataName.Limit.Name && context is not null)
                 {
-                    metadata = _context.Limit.ToString();
+                    metadata = context.Limit.ToString();
                     return true;
                 }
 
-                if (metadataName == RateLimitMetadataName.Remaining.Name && _context is not null)
+                if (metadataName == RateLimitMetadataName.Remaining.Name && context is not null)
                 {
-                    metadata = _context.Count;
+                    metadata = context.Count;
                     return true;
                 }
 
-                if (metadataName == RateLimitMetadataName.RetryAfter.Name && _context is not null)
+                if (metadataName == RateLimitMetadataName.RetryAfter.Name && context is not null)
                 {
-                    metadata = _context.RetryAfter;
+                    metadata = context.RetryAfter;
                     return true;
                 }
 
-                metadata = default;
+                metadata = null;
                 return false;
             }
         }
