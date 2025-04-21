@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.Http;
+﻿using System.Threading.RateLimiting;
 
 namespace Distributed.RateLimit.Redis
 {

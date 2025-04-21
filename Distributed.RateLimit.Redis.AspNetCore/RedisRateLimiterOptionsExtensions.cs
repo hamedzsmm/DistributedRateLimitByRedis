@@ -1,19 +1,22 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
-using System.Threading.RateLimiting;
 
 namespace Distributed.RateLimit.Redis.AspNetCore
 {
     public static class RedisRateLimiterOptionsExtensions
     {
         /// <summary>
-        /// Adds a new <see cref="RedisConcurrencyRateLimiter{TKey}"/> with the given <see cref="RedisConcurrencyRateLimiterOptions"/> to the <see cref="RateLimiterOptions"/>.
+        /// Adds a new <see cref="RedisConcurrencyRateLimiter{TKey}"/> with the given configuration to the specified <see cref="RateLimiterOptions"/>.
         /// </summary>
-        /// <param name="options">The <see cref="RateLimiterOptions"/> to add a limiter to.</param>
-        /// <param name="policyName">The name that will be associated with the limiter.</param>
-        /// <param name="configureOptions">A callback to configure the <see cref="RedisConcurrencyRateLimiterOptions"/> to be used for the limiter.</param>
-        /// <returns>This <see cref="RateLimiterOptions"/>.</returns>
-        public static RateLimiterOptions AddRedisConcurrencyLimiter(this RateLimiterOptions options, string policyName, Action<RedisConcurrencyRateLimiterOptions> configureOptions)
+        /// <param name="options">The <see cref="RateLimiterOptions"/> to which the limiter will be added.</param>
+        /// <param name="policyName">The unique name associated with this limiter policy.</param>
+        /// <param name="configureOptions">An action that configures the options used to initialize the <see cref="RedisConcurrencyRateLimiter{TKey}"/>.</param>
+        /// <param name="partitionKeySelector">A function that extracts a key from the <see cref="HttpContext"/> for partitioning rate limits.</param>
+        /// <returns>The updated <see cref="RateLimiterOptions"/> instance.</returns>
+        public static RateLimiterOptions AddRedisConcurrencyLimiter(this RateLimiterOptions options,
+            string policyName,
+            Action<RedisConcurrencyRateLimiterOptions> configureOptions,
+            Func<HttpContext, string> partitionKeySelector)
         {
             ArgumentNullException.ThrowIfNull(configureOptions);
 
@@ -23,18 +26,19 @@ namespace Distributed.RateLimit.Redis.AspNetCore
 
             return options.AddPolicy(policyName, context =>
             {
-                return RedisRateLimitPartition.GetConcurrencyRateLimiter(key, _ => concurrencyRateLimiterOptions);
+                var partition = partitionKeySelector(context);
+                return RedisRateLimitPartition.GetConcurrencyRateLimiter($"{key}-{partition}", _ => concurrencyRateLimiterOptions);
             });
         }
 
         /// <summary>
-        /// Adds a new <see cref="RedisFixedWindowRateLimiter{TKey}"/> with the given <see cref="RedisFixedWindowRateLimiterOptions"/> to the <see cref="RateLimiterOptions"/>.
+        /// Adds a new <see cref="RedisFixedWindowRateLimiter{TKey}"/> with the given configuration to the specified <see cref="RateLimiterOptions"/>.
         /// </summary>
-        /// <param name="options">The <see cref="RateLimiterOptions"/> to add a limiter to.</param>
-        /// <param name="policyName">The name that will be associated with the limiter.</param>
-        /// <param name="configureOptions">A callback to configure the <see cref="RedisFixedWindowRateLimiterOptions"/> to be used for the limiter.</param>
-        /// <param name="partitionKeySelector"></param>
-        /// <returns>This <see cref="RateLimiterOptions"/>.</returns>
+        /// <param name="options">The <see cref="RateLimiterOptions"/> to which the limiter will be added.</param>
+        /// <param name="policyName">The unique name associated with this limiter policy.</param>
+        /// <param name="configureOptions">An action that configures the options used to initialize the <see cref="RedisFixedWindowRateLimiter{TKey}"/>.</param>
+        /// <param name="partitionKeySelector">A function that extracts a key from the <see cref="HttpContext"/> for partitioning rate limits.</param>
+        /// <returns>The updated <see cref="RateLimiterOptions"/> instance.</returns>
         public static RateLimiterOptions AddRedisFixedWindowLimiter(
             this RateLimiterOptions options,
             string policyName,
@@ -57,13 +61,17 @@ namespace Distributed.RateLimit.Redis.AspNetCore
         }
 
         /// <summary>
-        /// Adds a new <see cref="RedisSlidingWindowRateLimiter{TKey}"/> with the given <see cref="RedisSlidingWindowRateLimiterOptions"/> to the <see cref="RateLimiterOptions"/>.
+        /// Adds a new <see cref="RedisSlidingWindowRateLimiter{TKey}"/> with the given configuration to the specified <see cref="RateLimiterOptions"/>.
         /// </summary>
-        /// <param name="options">The <see cref="RateLimiterOptions"/> to add a limiter to.</param>
-        /// <param name="policyName">The name that will be associated with the limiter.</param>
-        /// <param name="configureOptions">A callback to configure the <see cref="RedisSlidingWindowRateLimiterOptions"/> to be used for the limiter.</param>
-        /// <returns>This <see cref="RateLimiterOptions"/>.</returns>
-        public static RateLimiterOptions AddRedisSlidingWindowLimiter(this RateLimiterOptions options, string policyName, Action<RedisSlidingWindowRateLimiterOptions> configureOptions)
+        /// <param name="options">The <see cref="RateLimiterOptions"/> to which the limiter will be added.</param>
+        /// <param name="policyName">The unique name associated with this limiter policy.</param>
+        /// <param name="configureOptions">An action that configures the options used to initialize the <see cref="RedisSlidingWindowRateLimiter{TKey}"/>.</param>
+        /// <param name="partitionKeySelector">A function that extracts a key from the <see cref="HttpContext"/> for partitioning rate limits.</param>
+        /// <returns>The updated <see cref="RateLimiterOptions"/> instance.</returns>
+        public static RateLimiterOptions AddRedisSlidingWindowLimiter(this RateLimiterOptions options,
+            string policyName,
+            Action<RedisSlidingWindowRateLimiterOptions> configureOptions,
+            Func<HttpContext, string> partitionKeySelector)
         {
             ArgumentNullException.ThrowIfNull(configureOptions);
 
@@ -73,18 +81,23 @@ namespace Distributed.RateLimit.Redis.AspNetCore
 
             return options.AddPolicy(policyName, context =>
             {
-                return RedisRateLimitPartition.GetSlidingWindowRateLimiter(key, _ => slidingWindowRateLimiterOptions);
+                var partition = partitionKeySelector(context);
+                return RedisRateLimitPartition.GetSlidingWindowRateLimiter($"{key}-{partition}", _ => slidingWindowRateLimiterOptions);
             });
         }
 
         /// <summary>
-        /// Adds a new <see cref="RedisTokenBucketRateLimiter{TKey}"/> with the given <see cref="RedisTokenBucketRateLimiterOptions"/> to the <see cref="RateLimiterOptions"/>.
+        /// Adds a new <see cref="RedisTokenBucketRateLimiter{TKey}"/> with the given configuration to the specified <see cref="RateLimiterOptions"/>.
         /// </summary>
-        /// <param name="options">The <see cref="RateLimiterOptions"/> to add a limiter to.</param>
-        /// <param name="policyName">The name that will be associated with the limiter.</param>
-        /// <param name="configureOptions">A callback to configure the <see cref="RedisTokenBucketRateLimiterOptions"/> to be used for the limiter.</param>
-        /// <returns>This <see cref="RateLimiterOptions"/>.</returns>
-        public static RateLimiterOptions AddRedisTokenBucketLimiter(this RateLimiterOptions options, string policyName, Action<RedisTokenBucketRateLimiterOptions> configureOptions)
+        /// <param name="options">The <see cref="RateLimiterOptions"/> to which the limiter will be added.</param>
+        /// <param name="policyName">The unique name associated with this limiter policy.</param>
+        /// <param name="configureOptions">An action that configures the options used to initialize the <see cref="RedisTokenBucketRateLimiter{TKey}"/>.</param>
+        /// <param name="partitionKeySelector">A function that extracts a key from the <see cref="HttpContext"/> for partitioning rate limits.</param>
+        /// <returns>The updated <see cref="RateLimiterOptions"/> instance.</returns>
+        public static RateLimiterOptions AddRedisTokenBucketLimiter(this RateLimiterOptions options,
+            string policyName,
+            Action<RedisTokenBucketRateLimiterOptions> configureOptions,
+            Func<HttpContext, string> partitionKeySelector)
         {
             ArgumentNullException.ThrowIfNull(configureOptions);
 
@@ -94,7 +107,8 @@ namespace Distributed.RateLimit.Redis.AspNetCore
 
             return options.AddPolicy(policyName, context =>
             {
-                return RedisRateLimitPartition.GetTokenBucketRateLimiter(key, _ => tokenBucketRateLimiterOptions);
+                var partition = partitionKeySelector(context);
+                return RedisRateLimitPartition.GetTokenBucketRateLimiter($"{key}-{partition}", _ => tokenBucketRateLimiterOptions);
             });
         }
     }
