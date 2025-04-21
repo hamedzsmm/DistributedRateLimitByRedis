@@ -46,11 +46,11 @@ builder.Services.AddRateLimiter(options =>
 			return authHeader.GetSha256Hash();
 		});
 
-    options.OnRejected = (context, cancellationToken) =>
-    {
-        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
-        return new ValueTask();
-    };
+	options.OnRejected = (context, cancellationToken) =>
+	{
+		context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+		return new ValueTask();
+	};
 });
 
 var app = builder.Build();
