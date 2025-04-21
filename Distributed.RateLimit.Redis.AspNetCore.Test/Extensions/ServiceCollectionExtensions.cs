@@ -1,6 +1,5 @@
 ﻿using Distributed.RateLimit.Redis.AspNetCore.Test.Constants;
 using Distributed.RateLimit.Redis.AspNetCore.Test.Helpers;
-using Microsoft.Extensions.Primitives;
 using StackExchange.Redis;
 
 namespace Distributed.RateLimit.Redis.AspNetCore.Test.Extensions
@@ -28,25 +27,11 @@ namespace Distributed.RateLimit.Redis.AspNetCore.Test.Extensions
                         opt.Window = TimeSpan.FromSeconds(10);
                     }, context =>
                     {
-                        var hashKey = "";
+                        var authHeader = context.Request.Headers.TryGetValue("Authorization", out var value)
+                            ? value.ToString()
+                            : string.Empty;
 
-                        //Create hash from Bearer token
-                        if (context.Request.Headers.TryGetValue("Authorization", out var authHeader) &&
-                            !StringValues.IsNullOrEmpty(authHeader))
-                        {
-                            var authHeaderValue = authHeader.ToString();
-                            if (authHeaderValue.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                            {
-                                hashKey = authHeaderValue.GetSha256Hash();
-                            }
-                        }
-                        else
-                        {
-                            // Fall back to remote IP if header not present
-                            hashKey = (context.Connection.RemoteIpAddress?.ToString() ?? "unknown").GetSha256Hash();
-                        }
-
-                        return hashKey;
+                        return authHeader.GetSha256Hash();
                     });
 
                 options.OnRejected = (context, cancellationToken) =>
