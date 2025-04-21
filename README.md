@@ -39,25 +39,11 @@ builder.Services.AddRateLimiter(options =>
 			opt.Window = TimeSpan.FromSeconds(10);
 		}, context =>
 		{
-			var hashKey = "";
+			var authHeader = context.Request.Headers.TryGetValue("Authorization", out var value)
+				? value.ToString()
+				: string.Empty;
 
-			//Create hash from Bearer token
-			if (context.Request.Headers.TryGetValue("Authorization", out var authHeader) &&
-				!StringValues.IsNullOrEmpty(authHeader))
-			{
-				var authHeaderValue = authHeader.ToString();
-				if (authHeaderValue.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-				{
-					hashKey = authHeaderValue.GetSha256Hash();
-				}
-			}
-			else
-			{
-				// Fall back to remote IP if header not present
-				hashKey = (context.Connection.RemoteIpAddress?.ToString() ?? "unknown").GetSha256Hash();
-			}
-
-			return hashKey;
+			return authHeader.GetSha256Hash();
 		});
 
     options.OnRejected = (context, cancellationToken) =>
