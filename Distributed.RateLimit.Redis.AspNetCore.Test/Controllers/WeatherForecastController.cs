@@ -8,10 +8,10 @@ namespace Distributed.RateLimit.Redis.AspNetCore.Test.Controllers
     [Route("[controller]")]
     public class WeatherForecastController(ILogger<WeatherForecastController> logger) : ControllerBase
     {
-        private static readonly string[] Summaries = new[]
-        {
+        private static readonly string[] Summaries =
+        [
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
+        ];
 
         [HttpGet(Name = "GetWeatherForecast")]
         [EnableRateLimiting(RateLimitationConstants.WeatherForecastRateLimit)]
