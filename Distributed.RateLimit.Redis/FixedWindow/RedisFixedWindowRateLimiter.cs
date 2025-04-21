@@ -1,13 +1,7 @@
-﻿using Distributed.RateLimit.Redis.Concurrency;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
+﻿using System.Diagnostics;
 using System.Threading.RateLimiting;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
-namespace Distributed.RateLimit.Redis
+namespace Distributed.RateLimit.Redis.FixedWindow
 {
     public class RedisFixedWindowRateLimiter<TKey> : RateLimiter
     {

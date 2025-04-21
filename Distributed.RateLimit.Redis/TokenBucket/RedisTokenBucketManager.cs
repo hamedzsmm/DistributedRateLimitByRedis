@@ -1,6 +1,5 @@
 ﻿using StackExchange.Redis;
-using System;
-using System.Threading.Tasks;
+using Distributed.RateLimit.Redis.TokenBucket;
 
 namespace Distributed.RateLimit.Redis.Concurrency
 {

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Distributed.RateLimit.Redis
+﻿namespace Distributed.RateLimit.Redis.TokenBucket
 {
     /// <summary>
     /// Options to specify the behavior of a <see cref="RedisTokenBucketRateLimiterOptions"/>.

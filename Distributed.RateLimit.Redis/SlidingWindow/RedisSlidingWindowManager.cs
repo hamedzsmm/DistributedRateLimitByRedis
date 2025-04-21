@@ -1,9 +1,7 @@
-﻿using StackExchange.Redis;
-using System;
-using System.Threading.RateLimiting;
-using System.Threading.Tasks;
+﻿using System.Threading.RateLimiting;
+using StackExchange.Redis;
 
-namespace Distributed.RateLimit.Redis.Concurrency
+namespace Distributed.RateLimit.Redis.SlidingWindow
 {
     internal class RedisSlidingWindowManager
     {

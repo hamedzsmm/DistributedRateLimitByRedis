@@ -1,8 +1,6 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
-using StackExchange.Redis;
+﻿using StackExchange.Redis;
 
-namespace Distributed.RateLimit.Redis.Concurrency
+namespace Distributed.RateLimit.Redis.FixedWindow
 {
     internal class RedisFixedWindowManager
     {

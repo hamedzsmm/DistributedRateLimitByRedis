@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Distributed.RateLimit.Redis
+﻿namespace Distributed.RateLimit.Redis.FixedWindow
 {
     /// <summary>
     /// Options to specify the behavior of a <see cref="RedisFixedWindowRateLimiter"/>.

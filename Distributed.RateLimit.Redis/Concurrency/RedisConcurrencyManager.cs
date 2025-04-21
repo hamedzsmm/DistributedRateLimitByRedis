@@ -1,7 +1,5 @@
 ﻿using StackExchange.Redis;
-using System;
 using System.Threading.RateLimiting;
-using System.Threading.Tasks;
 
 namespace Distributed.RateLimit.Redis.Concurrency
 {

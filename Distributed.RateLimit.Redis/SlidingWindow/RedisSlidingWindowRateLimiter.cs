@@ -1,12 +1,7 @@
-﻿using Distributed.RateLimit.Redis.Concurrency;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Threading;
+﻿using System.Diagnostics;
 using System.Threading.RateLimiting;
-using System.Threading.Tasks;
 
-namespace Distributed.RateLimit.Redis
+namespace Distributed.RateLimit.Redis.SlidingWindow
 {
     public class RedisSlidingWindowRateLimiter<TKey> : RateLimiter
     {
